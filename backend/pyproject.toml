@@ -1,3 +1,7 @@
+# Dependency management: use uv (https://github.com/astral-sh/uv)
+# Setup:  uv venv .venv --python 3.11 && uv pip install -r requirements-dev.txt
+# Run:    source .venv/bin/activate (or use .venv/bin/python directly)
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.backends.legacy:build"
