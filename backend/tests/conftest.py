@@ -5,16 +5,16 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/engagement_test")
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/engagement_test"
+)
 os.environ.setdefault("JWT_SECRET", "test-secret-at-least-32-characters-long!!")
 os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
 from backend.api.main import create_app
 from backend.database.session import Base, get_db
 
-TEST_DATABASE_URL = os.environ["DATABASE_URL"].replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+TEST_DATABASE_URL = os.environ["DATABASE_URL"].replace("postgresql://", "postgresql+asyncpg://")
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

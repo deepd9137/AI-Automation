@@ -65,9 +65,7 @@ async def get_refresh_token_by_hash(db: AsyncSession, token_hash: str) -> Refres
 
 async def revoke_refresh_token(db: AsyncSession, token_hash: str) -> None:
     await db.execute(
-        update(RefreshToken)
-        .where(RefreshToken.token_hash == token_hash)
-        .values(revoked=True)
+        update(RefreshToken).where(RefreshToken.token_hash == token_hash).values(revoked=True)
     )
 
 

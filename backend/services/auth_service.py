@@ -45,9 +45,7 @@ async def register(db: AsyncSession, data: RegisterRequest) -> tuple[str, User]:
 async def login(db: AsyncSession, email: str, password: str) -> tuple[str, str, User]:
     user = await user_repo.get_user_by_email(db, email)
     if not user or not verify_password(password, user.hashed_pw):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account inactive")
 
@@ -90,9 +88,7 @@ async def refresh_tokens(db: AsyncSession, raw_refresh: str) -> tuple[str, str]:
 
     await user_repo.revoke_refresh_token(db, token_hash)
 
-    new_access = create_access_token(
-        user_id=str(user.id), org_id=str(user.org_id), role=user.role
-    )
+    new_access = create_access_token(user_id=str(user.id), org_id=str(user.org_id), role=user.role)
     new_raw_refresh = create_refresh_token(user_id=str(user.id))
     new_hash = hash_token(new_raw_refresh)
     new_expires = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
@@ -127,15 +123,17 @@ async def request_password_reset(db: AsyncSession, email: str) -> None:
 
     if settings.RESEND_API_KEY:
         resend.api_key = settings.RESEND_API_KEY
-        resend.Emails.send({
-            "from": settings.EMAIL_FROM,
-            "to": email,
-            "subject": "Your password reset code",
-            "text": (
-                f"Your one-time password reset code is: {otp}\n\n"
-                "This code expires in 15 minutes."
-            ),
-        })
+        resend.Emails.send(
+            {
+                "from": settings.EMAIL_FROM,
+                "to": email,
+                "subject": "Your password reset code",
+                "text": (
+                    f"Your one-time password reset code is: {otp}\n\n"
+                    "This code expires in 15 minutes."
+                ),
+            }
+        )
 
 
 async def confirm_password_reset(db: AsyncSession, email: str, otp: str, new_password: str) -> None:

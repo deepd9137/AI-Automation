@@ -80,17 +80,13 @@ async def test_refresh_token_rotation(client: AsyncClient) -> None:
     )
     refresh_cookie = login_resp.cookies["refresh_token"]
 
-    refresh_resp = await client.post(
-        f"{BASE}/refresh", cookies={"refresh_token": refresh_cookie}
-    )
+    refresh_resp = await client.post(f"{BASE}/refresh", cookies={"refresh_token": refresh_cookie})
     assert refresh_resp.status_code == 200
     new_token = refresh_resp.json()["access_token"]
     assert new_token != login_resp.json()["access_token"]
 
     # Old refresh token must be rejected
-    second_refresh = await client.post(
-        f"{BASE}/refresh", cookies={"refresh_token": refresh_cookie}
-    )
+    second_refresh = await client.post(f"{BASE}/refresh", cookies={"refresh_token": refresh_cookie})
     assert second_refresh.status_code == 401
 
 
@@ -101,15 +97,11 @@ async def test_logout(client: AsyncClient) -> None:
     )
     refresh_cookie = login_resp.cookies["refresh_token"]
 
-    logout_resp = await client.post(
-        f"{BASE}/logout", cookies={"refresh_token": refresh_cookie}
-    )
+    logout_resp = await client.post(f"{BASE}/logout", cookies={"refresh_token": refresh_cookie})
     assert logout_resp.status_code == 204
 
     # Token should be revoked
-    refresh_resp = await client.post(
-        f"{BASE}/refresh", cookies={"refresh_token": refresh_cookie}
-    )
+    refresh_resp = await client.post(f"{BASE}/refresh", cookies={"refresh_token": refresh_cookie})
     assert refresh_resp.status_code == 401
 
 
@@ -117,9 +109,7 @@ async def test_password_reset_flow(client: AsyncClient) -> None:
     await _register(client, "reset@example.com", "Reset Org")
 
     # Request always returns 200 (enumeration prevention)
-    resp = await client.post(
-        f"{BASE}/password-reset/request", json={"email": "reset@example.com"}
-    )
+    resp = await client.post(f"{BASE}/password-reset/request", json={"email": "reset@example.com"})
     assert resp.status_code == 200
 
     resp_unknown = await client.post(
@@ -169,6 +159,7 @@ async def test_viewer_role_returns_403_on_admin_endpoint(client: AsyncClient) ->
 
     async with TestSessionLocal() as db:
         import uuid
+
         viewer = await create_user(
             db,
             email="viewer@viewer-test.com",
@@ -203,6 +194,7 @@ async def test_cross_tenant_isolation(client: AsyncClient) -> None:
 
     # Forged token claiming org_b membership but with wrong user_id should not resolve
     import uuid
+
     forged = create_access_token(user_id=str(uuid.uuid4()), org_id=org_id_b, role="org_admin")
     resp = await client.get(f"{BASE}/me", headers={"Authorization": f"Bearer {forged}"})
     assert resp.status_code == 401
