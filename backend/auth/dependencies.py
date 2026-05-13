@@ -1,9 +1,10 @@
-from backend.database.session import get_db
-from backend.models.user import User
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.database.session import get_db
+from backend.models.user import User
 
 bearer = HTTPBearer()
 

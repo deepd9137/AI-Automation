@@ -128,8 +128,9 @@ async def test_password_reset_confirm_invalid_otp(client: AsyncClient) -> None:
 
 
 async def test_expired_token_returns_401(client: AsyncClient) -> None:
-    from backend.core.config import settings
     from jose import jwt as jose_jwt
+
+    from backend.core.config import settings
 
     payload = {
         "sub": "fake-id",

@@ -1,6 +1,7 @@
+from fastapi import Depends, HTTPException, status
+
 from backend.auth.dependencies import get_current_user
 from backend.models.user import User
-from fastapi import Depends, HTTPException, status
 
 ROLE_HIERARCHY = ["viewer", "agent", "org_admin", "super_admin"]
 

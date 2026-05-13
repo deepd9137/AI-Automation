@@ -2,14 +2,15 @@ import re
 from datetime import UTC, datetime, timedelta
 
 import resend
+from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.auth.jwt import create_access_token, create_refresh_token, decode_token
 from backend.auth.password import generate_otp, hash_password, hash_token, verify_password
 from backend.core.config import settings
 from backend.models.user import User
 from backend.repositories import user_repo
 from backend.schemas.auth import RegisterRequest
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _slugify(name: str) -> str:

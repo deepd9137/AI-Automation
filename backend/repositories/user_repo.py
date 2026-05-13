@@ -1,11 +1,12 @@
 import uuid
 from datetime import UTC, datetime
 
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.models.organization import Organization
 from backend.models.token import PasswordResetOtp, RefreshToken
 from backend.models.user import User
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:

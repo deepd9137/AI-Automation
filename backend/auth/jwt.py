@@ -1,7 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
-from backend.core.config import settings
 from jose import JWTError, jwt
+
+from backend.core.config import settings
 
 
 def create_access_token(user_id: str, org_id: str, role: str) -> str:

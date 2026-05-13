@@ -1,3 +1,8 @@
+from fastapi import APIRouter, Cookie, Depends, Response, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.auth.dependencies import get_current_user
 from backend.auth.rbac import require_role
 from backend.database.session import get_db
@@ -12,10 +17,6 @@ from backend.schemas.auth import (
     UserOut,
 )
 from backend.services import auth_service
-from fastapi import APIRouter, Cookie, Depends, Response, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 limiter = Limiter(key_func=get_remote_address)
