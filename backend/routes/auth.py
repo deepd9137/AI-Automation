@@ -1,4 +1,7 @@
+from backend.auth.dependencies import get_current_user
+from backend.auth.rbac import require_role
 from backend.database.session import get_db
+from backend.models.user import User
 from backend.schemas.auth import (
     LoginRequest,
     PasswordResetConfirmBody,
@@ -111,3 +114,18 @@ async def password_reset_confirm(
 ) -> dict[str, str]:
     await auth_service.confirm_password_reset(db, body.email, body.otp, body.new_password)
     return {"message": "Password updated successfully."}
+
+
+@router.get("/me", response_model=UserOut)
+async def me(current_user: User = Depends(get_current_user)) -> UserOut:
+    return UserOut(
+        id=str(current_user.id),
+        email=current_user.email,
+        role=current_user.role,
+        org_id=str(current_user.org_id),
+    )
+
+
+@router.get("/admin-only", dependencies=[Depends(require_role("org_admin", "super_admin"))])
+async def admin_only() -> dict[str, str]:
+    return {"message": "admin access granted"}

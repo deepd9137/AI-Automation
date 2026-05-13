@@ -1,19 +1,20 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 
 pytestmark = pytest.mark.asyncio
 
 BASE = "/api/v1/auth"
 
 
-async def _register(  # type: ignore[return]
+async def _register(
     client: AsyncClient, email: str = "user@example.com", org: str = "Acme"
-) -> dict:  # type: ignore[type-arg]
-    resp = await client.post(
+) -> Response:
+    return await client.post(
         f"{BASE}/register",
         json={"email": email, "password": "password123", "org_name": org},
     )
-    return resp
 
 
 async def test_register_success(client: AsyncClient) -> None:
@@ -134,3 +135,74 @@ async def test_password_reset_confirm_invalid_otp(client: AsyncClient) -> None:
         json={"email": "resetbad@example.com", "otp": "000000", "new_password": "newpassword123"},
     )
     assert resp.status_code == 400
+
+
+async def test_expired_token_returns_401(client: AsyncClient) -> None:
+    from backend.core.config import settings
+    from jose import jwt as jose_jwt
+
+    payload = {
+        "sub": "fake-id",
+        "org_id": "fake-org",
+        "role": "org_admin",
+        "exp": datetime.now(UTC) - timedelta(minutes=1),
+        "type": "access",
+    }
+    expired_token = jose_jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+    resp = await client.get(f"{BASE}/me", headers={"Authorization": f"Bearer {expired_token}"})
+    assert resp.status_code == 401
+
+
+async def test_viewer_role_returns_403_on_admin_endpoint(client: AsyncClient) -> None:
+    from backend.auth.jwt import create_access_token
+    from backend.auth.password import hash_password
+    from backend.repositories.user_repo import create_user
+
+    # Register an org first to get a valid org_id
+    reg = await _register(client, "owner@viewer-test.com", "Viewer Test Org")
+    owner_data = reg.json()
+    org_id = owner_data["user"]["org_id"]
+
+    # Create a viewer user directly in the DB via the test session
+    from backend.tests.conftest import TestSessionLocal
+
+    async with TestSessionLocal() as db:
+        import uuid
+        viewer = await create_user(
+            db,
+            email="viewer@viewer-test.com",
+            hashed_pw=hash_password("password123"),
+            org_id=uuid.UUID(org_id),
+            role="viewer",
+        )
+        await db.commit()
+        viewer_id = str(viewer.id)
+
+    viewer_token = create_access_token(user_id=viewer_id, org_id=org_id, role="viewer")
+    resp = await client.get(
+        f"{BASE}/admin-only", headers={"Authorization": f"Bearer {viewer_token}"}
+    )
+    assert resp.status_code == 403
+
+
+async def test_cross_tenant_isolation(client: AsyncClient) -> None:
+    from backend.auth.jwt import create_access_token
+
+    # Register two separate orgs
+    reg_a = await _register(client, "user@org-a.com", "Org A")
+    reg_b = await _register(client, "user@org-b.com", "Org B")
+
+    token_a = reg_a.json()["access_token"]
+    org_id_b = reg_b.json()["user"]["org_id"]
+
+    # user from org A uses their own token — should see their own profile
+    me_a = await client.get(f"{BASE}/me", headers={"Authorization": f"Bearer {token_a}"})
+    assert me_a.status_code == 200
+    assert me_a.json()["org_id"] != org_id_b
+
+    # Forged token claiming org_b membership but with wrong user_id should not resolve
+    import uuid
+    forged = create_access_token(user_id=str(uuid.uuid4()), org_id=org_id_b, role="org_admin")
+    resp = await client.get(f"{BASE}/me", headers={"Authorization": f"Bearer {forged}"})
+    assert resp.status_code == 401

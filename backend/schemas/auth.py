@@ -26,7 +26,7 @@ class TokenResponse(BaseModel):
 
 class UserOut(BaseModel):
     id: str
-    email: str
+    email: EmailStr
     role: str
     org_id: str
 
