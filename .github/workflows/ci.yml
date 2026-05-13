@@ -31,6 +31,7 @@ jobs:
       OPENAI_API_KEY: sk-test-placeholder
       JWT_SECRET: test-secret-32-chars-minimum-here
       ENVIRONMENT: test
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v4
