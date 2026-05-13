@@ -31,6 +31,7 @@ jobs:
       OPENAI_API_KEY: sk-test-placeholder
       JWT_SECRET: test-secret-32-chars-minimum-here
       ENVIRONMENT: test
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,17 +45,17 @@ jobs:
         run: pip install -r backend/requirements-dev.txt
 
       - name: Lint (ruff)
-        run: ruff check backend/
+        run: ruff check backend/ --config backend/pyproject.toml
 
       - name: Format check (black)
-        run: black --check backend/
+        run: black --check backend/ --config backend/pyproject.toml
 
       - name: Type check (mypy)
-        run: mypy backend/
+        run: mypy backend/ --config-file backend/pyproject.toml --ignore-missing-imports
         working-directory: .
 
       - name: Tests
-        run: pytest backend/tests/ -v --cov=backend --cov-report=xml
+        run: pytest backend/tests/ -v --cov=backend --cov-report=xml --config-file=backend/pyproject.toml
         working-directory: .
 
       - name: Upload coverage
